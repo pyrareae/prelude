@@ -1,6 +1,7 @@
 (load "server")
 (unless (server-running-p) (server-start))
 (require 'prelude-helm-everywhere)
+(require 'use-package)
 
 ;; Vars
 
@@ -10,6 +11,7 @@
 (setq indent-line-function 'insert-tab)
 (setq split-height-threshold nil)
 (setq create-lockfiles nil)
+(setq prelude-whitespace nil)
 
 ;; Global modes
 (global-display-line-numbers-mode t)
@@ -27,6 +29,8 @@
 (add-hook 'ruby-mode-hook 'robe-mode)
 
 (add-hook 'text-mode-hook #'adaptive-wrap-prefix-mode)
+(add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)  
 ;(add-hook 'vue-mode-hook (lambda () (setq syntax-ppss-table nil)))
 
 ;; other hooks
@@ -36,6 +40,7 @@
 
 
 ;; Bindings
+(global-set-key (kbd "C-?") 'undo-tree-redo)
 (global-set-key (kbd "C-s-<up>") 'move-text-up)
 (global-set-key (kbd "C-s-<down>") 'move-text-down)
 (global-set-key (kbd "C-x M-t") 'treemacs)
@@ -47,7 +52,7 @@
 (global-set-key (kbd "s-SPC") 'projectile-find-file)
 ;; (global-set-key (kbd "RET") 'newline-and-indent)
 (global-set-key (kbd "M-x") 'helm-M-x)
-(define-key magit-file-section-map (kbd "RET") 'magit-diff-visit-file-other-window)
+;; (define-key 'magit-file-section-map (kbd "RET") 'magit-diff-visit-file-other-window)
 
 
 ;; MISC
@@ -81,6 +86,9 @@
       '("^\\*helm\\b"
         "^\\*swiper\\*$"))
 
+
+(load (expand-file-name "~/.quicklisp/slime-helper.el"))
+(setq inferior-lisp-program "sbcl")
 
 ;; VUE setup
 ;; source https://gist.github.com/SjB/07cdce0f1fba171704d93c2989077f4d
