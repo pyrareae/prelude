@@ -1,7 +1,92 @@
 (load "server")
+(setq warning-minimum-level :emergency)
 (unless (server-running-p) (server-start))
-(require 'prelude-helm-everywhere)
+;; (require 'prelude-helm-everywhere)
+;; (require 'smex)
+;; (smex-initialize)
 (require 'use-package)
+(require 'use-package-ensure)
+(setq use-package-always-ensure t)
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
+(use-package selectrum)
+(selectrum-mode +1)
+(setq completion-styles '(orderless))
+(savehist-mode)
+(setq orderless-skip-highlighting (lambda () selectrum-is-active))
+(setq selectrum-highlight-candidates-function #'orderless-highlight-matches)
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
+(use-package consult)
+(use-package embark)
+
+(use-package marginalia
+  :ensure t
+  :config
+  (marginalia-mode))
+
+(use-package embark
+  :ensure t
+
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+
+  :init
+
+  ;; Optionally replace the key help with a completing-read interface
+  (setq prefix-help-command #'embark-prefix-help-command)
+
+  :config
+
+  ;; Hide the mode line of the Embark live/completions buffers
+  (add-to-list 'display-buffer-alist
+               '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                 nil
+                 (window-parameters (mode-line-format . none)))))
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :demand t ; only necessary if you have the hook below
+  ;; if you want to have consult previews as you move around an
+  ;; auto-updating embark collect buffer
+  :hook
+  (embark-collect-mode . consult-preview-at-point-mode))
+
+;; (package-initialize)
+;; (require 'ergoemacs-mode)
+;; (setq ergoemacs-theme nil) ;; Uses Standard Ergoemacs keyboard theme
+;; (setq ergoemacs-keyboard-layout "us") ;; Assumes QWERTY keyboard layout
+;; (ergoemacs-mode 1)
+;; (require 'boon-qwerty)
+;; (boon-mode)
+
+
+;; (require 'god-mode)
+;; (god-mode)
+;; (global-set-key (kbd "<escape>") #'god-mode-all)
+;; (which-key-enable-god-mode-support)
+;; (setq god-exempt-major-modes '(magit-mode))
+;; (setq god-exempt-predicates nil)
+;; (defun my-god-mode-update-cursor-type ()
+;;   (setq cursor-type (if (or god-local-mode buffer-read-only) 'box 'bar)))
+
+;; (add-hook 'post-command-hook #'my-god-mode-update-cursor-type)
+
+(require 'tree-sitter)
+(require 'tree-sitter-langs)
+;; (require 'icicles)
+
+;;  General CONF
+(set-face-attribute 'default nil :height 120)
+
 
 ;; Vars
 
@@ -12,10 +97,12 @@
 (setq split-height-threshold nil)
 (setq create-lockfiles nil)
 (setq prelude-whitespace nil)
+;; (guru-global-mode nil)
 
 ;; Global modes
 (global-display-line-numbers-mode t)
 (smartparens-global-mode t)
+(pixel-scroll-precision-mode t)
 
 ;; Mode hooks
 ;; File associations
@@ -26,11 +113,16 @@
 (add-hook 'treemacs-mode-hook (lambda() (display-line-numbers-mode -1)))
 
 ;(add-hook 'vue-mode-hook #'lsp)
-(add-hook 'ruby-mode-hook 'robe-mode)
+;; (add-hook 'ruby-mode-hook 'robe-mode)
+(add-hook 'enh-ruby-mode-hook #'lsp)
+(add-hook 'ruby-mode-hook #'lsp)
 
 (add-hook 'text-mode-hook #'adaptive-wrap-prefix-mode)
 (add-hook 'prog-mode-hook #'adaptive-wrap-prefix-mode)
-(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)  
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+(add-hook 'emacs-lisp-mode-hook (lambda () (lispy-mode 1)))
+(add-hook 'common-lisp-mode (lambda () (lispy-mode 1)))
+;; (add-hook 'text-mode-hook #')
 ;(add-hook 'vue-mode-hook (lambda () (setq syntax-ppss-table nil)))
 
 ;; other hooks
@@ -50,9 +142,20 @@
 (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
 (global-set-key (kbd "C-c C-<") 'mc/mark-all-like-this)
 (global-set-key (kbd "s-SPC") 'projectile-find-file)
+(global-set-key (kbd "C-<tab>") 'consult-project-buffer)
 ;; (global-set-key (kbd "RET") 'newline-and-indent)
-(global-set-key (kbd "M-x") 'helm-M-x)
+;; (global-set-key (kbd "M-x") 'helm-M-x)
+;; (global-set-key (kbd "C-\\") 'helm-M-x)
+;; (global-set-key (kbd "M-\\")  (lambda () (interactive)
+                                ;; (if (bound-and-true-p projectile-mode)
+                                  ;; 'projectile-find-file
+                                  ;; 'find-file)))
+;; (global-set-key (kbd "M-x") 'smex)
+;; (global-set-key (kbd "M-X") 'smex-major-mode-commands)
+(global-set-key (kbd "C-c C-c M-x") 'helm-M-x)
 ;; (define-key 'magit-file-section-map (kbd "RET") 'magit-diff-visit-file-other-window)
+(global-set-key (kbd "C-s") 'swiper)
+(global-set-key (kbd "C-x C-b") 'consult-buffer)
 
 
 ;; MISC
@@ -69,30 +172,11 @@
 
 (windmove-default-keybindings)
 
-;; buffer tab conf
-;; key to begin cycling buffers.  Global key.
-(global-set-key (kbd "C-<tab>") 'buffer-flip)
-
-;; transient keymap used once cycling starts
-(setq buffer-flip-map
-      (let ((map (make-sparse-keymap)))
-        (define-key map (kbd "C-<tab>")   'buffer-flip-forward)
-        (define-key map (kbd "C-S-<tab>") 'buffer-flip-backward)
-        (define-key map (kbd "C-ESC")     'buffer-flip-abort)
-        map))
-
-;; buffers matching these patterns will be skipped
-(setq buffer-flip-skip-patterns
-      '("^\\*helm\\b"
-        "^\\*swiper\\*$"))
-
-
-(load (expand-file-name "~/.quicklisp/slime-helper.el"))
+;(load (expand-file-name "~/.quicklisp/slime-helper.el"))
 (setq inferior-lisp-program "sbcl")
 
 ;; VUE setup
 ;; source https://gist.github.com/SjB/07cdce0f1fba171704d93c2989077f4d
-
 
 (use-package polymode
         :ensure t
